@@ -9,53 +9,61 @@ let isPlaying = false;
 let isPaused = false;
 let tourStartTime;
 let animationId;
+let chapterProgressInterval;
+let currentChapterProgress = 0;
 
 // Chapter data with narration and camera positions
 const chapters = [
     {
-        title: "The Farm - Where It All Begins",
-        duration: 60,
-        narration: "Welcome to our journey through the world of raw milk! We begin at the farm, where healthy cows graze in open pastures. Raw milk comes directly from the cow without pasteurization or homogenization, preserving its natural state. This milk contains over 60 enzymes, beneficial bacteria, and essential nutrients that support human health.",
+        title: "Chapter I",
+        subtitle: "The Farm — Where It All Begins",
+        duration: 50,
+        narration: "Welcome to our journey through the world of raw milk. We begin at the farm, where healthy cows graze in open pastures. Raw milk comes directly from the cow without pasteurization or homogenization, preserving its natural state. This milk contains over 60 enzymes, beneficial bacteria, and essential nutrients that support human health.",
         cameraPosition: { x: 15, y: 8, z: 15 },
         lookAt: { x: 0, y: 2, z: 0 },
         showInfo: false
     },
     {
-        title: "The Cow - Nature's Perfect Producer",
-        duration: 60,
-        narration: "Meet our friendly cow! Cows are remarkable creatures that produce milk rich in immunoglobulins, lactoferrin, and lysozyme - natural compounds that support immune function. Grass-fed cows produce milk with higher levels of omega-3 fatty acids and conjugated linoleic acid (CLA), which have been linked to numerous health benefits including reduced inflammation and improved heart health.",
+        title: "Chapter II",
+        subtitle: "The Cow — Nature's Perfect Producer",
+        duration: 50,
+        narration: "Meet our friendly cow. Cows are remarkable creatures that produce milk rich in immunoglobulins, lactoferrin, and lysozyme — natural compounds that support immune function. Grass-fed cows produce milk with higher levels of omega-3 fatty acids and conjugated linoleic acid (CLA), which have been linked to numerous health benefits including reduced inflammation and improved heart health.",
         cameraPosition: { x: 8, y: 4, z: 8 },
         lookAt: { x: 0, y: 2, z: 0 },
         showInfo: true
     },
     {
-        title: "Milking Process - Pure and Natural",
-        duration: 60,
+        title: "Chapter III",
+        subtitle: "Milking Process — Pure and Natural",
+        duration: 50,
         narration: "The milking process for raw milk requires exceptional care and hygiene. Unlike conventional milk, raw milk is never heated above body temperature, preserving delicate enzymes like lactase that help digest lactose. The milk flows naturally, maintaining its complex structure of proteins, fats, and carbohydrates exactly as nature intended.",
         cameraPosition: { x: -10, y: 5, z: 10 },
         lookAt: { x: 0, y: 2, z: 0 },
         showInfo: false
     },
     {
-        title: "Milk Composition - Liquid Gold",
-        duration: 60,
-        narration: "Look closely at the milk particles! Raw milk contains a perfect balance of nutrients: calcium for strong bones, vitamin D for immune support, vitamin K2 for heart health, and B vitamins for energy metabolism. The fat globules in raw milk are surrounded by a membrane that protects against harmful bacteria while delivering fat-soluble vitamins efficiently to your body.",
+        title: "Chapter IV",
+        subtitle: "Milk Composition — Liquid Gold",
+        duration: 50,
+        narration: "Look closely at the milk particles. Raw milk contains a perfect balance of nutrients: calcium for strong bones, vitamin D for immune support, vitamin K2 for heart health, and B vitamins for energy metabolism. The fat globules in raw milk are surrounded by a membrane that protects against harmful bacteria while delivering fat-soluble vitamins efficiently to your body.",
         cameraPosition: { x: 0, y: 10, z: 12 },
         lookAt: { x: 0, y: 3, z: 0 },
         showInfo: true
     },
     {
-        title: "Health Benefits - Why It Matters",
-        duration: 60,
+        title: "Chapter V",
+        subtitle: "Health Benefits — Why It Matters",
+        duration: 50,
         narration: "Research suggests raw milk may help reduce allergies, asthma, and eczema in children. The beneficial bacteria in raw milk support gut health and digestion. Many people who are lactose intolerant find they can digest raw milk better due to the presence of lactase-producing bacteria. Raw milk represents a complete food that has nourished humans for thousands of years.",
         cameraPosition: { x: -15, y: 6, z: -10 },
         lookAt: { x: 0, y: 2, z: 0 },
         showInfo: false
     },
     {
-        title: "Conclusion - A Natural Choice",
+        title: "Chapter VI",
+        subtitle: "Conclusion — A Natural Choice",
         duration: 30,
-        narration: "Thank you for joining us on this journey! Raw milk is more than just a beverage - it's a connection to traditional farming, natural nutrition, and holistic health. While it's important to source raw milk from trusted, certified farms with high safety standards, many choose raw milk as part of a wellness-focused lifestyle. Remember to always research local regulations and consult healthcare providers.",
+        narration: "Thank you for joining us on this journey. Raw milk is more than just a beverage — it's a connection to traditional farming, natural nutrition, and holistic health. While it's important to source raw milk from trusted, certified farms with high safety standards, many choose raw milk as part of a wellness-focused lifestyle. Remember to always research local regulations and consult healthcare providers.",
         cameraPosition: { x: 20, y: 10, z: 20 },
         lookAt: { x: 0, y: 2, z: 0 },
         showInfo: false
@@ -558,6 +566,13 @@ function advanceToNextChapter() {
     }
 }
 
+// Advance to specific chapter
+function advanceToChapter(chapterIndex) {
+    currentChapter = chapterIndex;
+    updateChapterDisplay();
+    transitionToChapter(currentChapter);
+}
+
 // Transition to a specific chapter
 function transitionToChapter(chapterIndex) {
     const chapter = chapters[chapterIndex];
@@ -599,36 +614,71 @@ function transitionToChapter(chapterIndex) {
 
     animateCamera();
 
-    // Update narration
+    // Update narration with fade effect
+    const narrationPanel = document.getElementById('narration-panel');
+    const chapterTitle = document.getElementById('chapter-title');
+    const narrationText = document.getElementById('narration-text');
+    
+    narrationPanel.classList.remove('visible');
+    
     setTimeout(() => {
-        document.getElementById('narration-text').textContent = chapter.narration;
-    }, 500);
+        chapterTitle.textContent = `${chapter.title} — ${chapter.subtitle}`;
+        narrationText.textContent = chapter.narration;
+        narrationPanel.classList.add('visible');
+    }, 300);
 
-    // Show/hide info panel
+    // Show/hide info panel with animation
     const infoPanel = document.getElementById('info-panel');
-    infoPanel.style.display = chapter.showInfo ? 'block' : 'none';
+    if (chapter.showInfo) {
+        infoPanel.style.display = 'block';
+        setTimeout(() => infoPanel.classList.add('visible'), 50);
+    } else {
+        infoPanel.classList.remove('visible');
+        setTimeout(() => {
+            if (!chapters[currentChapter]?.showInfo) {
+                infoPanel.style.display = 'none';
+            }
+        }, 600);
+    }
 }
 
 // Update chapter display
 function updateChapterDisplay() {
-    document.getElementById('chapter-indicator').textContent = 
-        `Chapter ${currentChapter + 1}/${chapters.length}`;
+    const chapterNav = document.getElementById('chapter-nav');
+    chapterNav.innerHTML = '';
+    
+    chapters.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = `chapter-dot ${index === currentChapter ? 'active' : ''}`;
+        dot.setAttribute('data-chapter', `Chapter ${index + 1}`);
+        dot.addEventListener('click', () => {
+            if (isPlaying && !isPaused) {
+                advanceToChapter(index);
+            }
+        });
+        chapterNav.appendChild(dot);
+    });
 }
 
 // Start the tour
 function startTour() {
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('narration-panel').style.display = 'block';
-    document.getElementById('chapter-indicator').style.display = 'block';
-    document.getElementById('controls').style.display = 'flex';
-    document.getElementById('skip-button').style.display = 'block';
+    const startScreen = document.getElementById('start-screen');
+    startScreen.classList.add('hidden');
     
-    isPlaying = true;
-    tourStartTime = Date.now();
-    currentChapter = 0;
-    
-    updateChapterDisplay();
-    transitionToChapter(0);
+    setTimeout(() => {
+        startScreen.style.display = 'none';
+        document.getElementById('narration-panel').style.display = 'block';
+        document.getElementById('chapter-nav').classList.add('visible');
+        document.getElementById('controls').classList.add('visible');
+        document.getElementById('skip-button').style.display = 'block';
+        
+        isPlaying = true;
+        tourStartTime = Date.now();
+        currentChapter = 0;
+        
+        updateChapterDisplay();
+        transitionToChapter(0);
+    }, 800);
 }
 
 // End the tour
@@ -650,14 +700,14 @@ document.getElementById('skip-button').addEventListener('click', () => {
 
 document.getElementById('pause-btn').addEventListener('click', () => {
     isPaused = !isPaused;
-    document.getElementById('pause-btn').textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+    document.getElementById('pause-btn').textContent = isPaused ? '▶ Resume' : 'Pause';
 });
 
 document.getElementById('restart-btn').addEventListener('click', () => {
     currentChapter = 0;
     tourStartTime = Date.now();
     isPaused = false;
-    document.getElementById('pause-btn').textContent = '⏸️ Pause';
+    document.getElementById('pause-btn').textContent = 'Pause';
     document.getElementById('skip-button').style.display = 'block';
     updateChapterDisplay();
     transitionToChapter(0);
