@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Milk Journey - Interactive 3D Experience</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: all;
+            z-index: 200;
+        }
+
+        #start-screen h1 {
+            font-size: 4em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #start-screen p {
+            font-size: 1.5em;
+            color: #34495e;
+            margin-bottom: 40px;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        #start-button {
+            padding: 20px 60px;
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        #start-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        #narration-panel {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            pointer-events: all;
+            display: none;
+        }
+
+        #narration-text {
+            font-size: 1.3em;
+            color: #2c3e50;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        #chapter-indicator {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            color: #2c3e50;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        #controls {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            gap: 15px;
+            pointer-events: all;
+            display: none;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            color: #2c3e50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 300px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: none;
+            pointer-events: all;
+        }
+
+        #info-panel h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        #info-panel ul {
+            list-style: none;
+            color: #34495e;
+        }
+
+        #info-panel li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        #info-panel li:last-child {
+            border-bottom: none;
+        }
+
+        .milk-particle {
+            position: absolute;
+            background: radial-gradient(circle, #ffffff 0%, #f0f0f0 100%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #skip-button {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 30px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            pointer-events: all;
+        }
+
+        #skip-button:hover {
+            background: rgba(231, 76, 60, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="ui-overlay">
+        <div id="start-screen">
+            <h1>🥛 The Raw Milk Journey</h1>
+            <p>Experience the fascinating world of raw milk through an interactive 3D adventure. Discover its importance, benefits, and the science behind it.</p>
+            <button id="start-button">Begin Tour</button>
+        </div>
+
+        <button id="skip-button">Skip to Next Chapter</button>
+        
+        <div id="chapter-indicator">Chapter 1/5</div>
+        
+        <div id="controls">
+            <button class="control-btn" id="pause-btn">⏸️ Pause</button>
+            <button class="control-btn" id="restart-btn">🔄 Restart</button>
+        </div>
+
+        <div id="info-panel">
+            <h3>Nutritional Facts</h3>
+            <ul>
+                <li>• Rich in enzymes</li>
+                <li>• Contains probiotics</li>
+                <li>• High in vitamins A & D</li>
+                <li>• Natural antibodies</li>
+                <li>• Omega-3 fatty acids</li>
+            </ul>
+        </div>
+
+        <div id="narration-panel">
+            <div id="narration-text"></div>
+            <div id="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
